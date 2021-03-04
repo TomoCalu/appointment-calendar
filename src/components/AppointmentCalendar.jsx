@@ -9,6 +9,12 @@ class AppointmentCalendar extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      maximumDailyAppointments: props.maximumDailyAppointments ? this.props.maximumDailyAppointments : 1,
+      maximumWeeklyAppointments: props.maximumWeeklyAppointments ? this.props.maximumWeeklyAppointments : 2,
+      startTime: props.startTime ? this.props.startTime : "8:00",
+      endTime: props.endTime ? this.props.endTime : "19:00",
+      sessionLengthMinutes: props.sessionLengthMinutes ? this.props.sessionLengthMinutes : 30,
+      numberOfDays: props.numberOfDays ? this.props.numberOfDays : 7,
       calendar: [],
       days: [],
       appointmentTimes: [],
@@ -26,9 +32,10 @@ class AppointmentCalendar extends Component {
   }
 
   componentDidMount() {
-    this.setState({
+    if (!this.props.initialCalendarData) this.generateEmptyCalendar();
+    else this.setState({
       calendar: this.props.initialCalendarData,
-      numberOfReservedAppointments: new Array(this.props.numberOfDays).fill(0)
+      numberOfReservedAppointments: new Array(this.state.numberOfDays).fill(0)
     }, () => {
       this.getDayHeader();
       this.getAppointmentTimes();
@@ -36,7 +43,7 @@ class AppointmentCalendar extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.initialCalendarData !== this.props.initialCalendarData) {
+    if (prevProps.initialCalendarData !== this.props.initialCalendarData && this.props.initialCalendarData) {
       this.setState({ calendar: this.props.initialCalendarData }, () => {
         this.getDayHeader();
         this.getAppointmentTimes();
@@ -44,9 +51,38 @@ class AppointmentCalendar extends Component {
     }
   }
 
+  generateEmptyCalendar() {
+    let appointmentTime;
+    let numberOfAppointments = (moment(this.state.endTime, "H:mm").diff(moment(this.state.startTime, "H:mm"), 'minutes') / this.state.sessionLengthMinutes);
+    let calendar = new Array(this.state.numberOfDays)
+    let appointmentId = 0;
+
+    for (var i = 0; i < this.state.numberOfDays; i++) {
+      calendar[i] = new Array(numberOfAppointments)
+      for (var j = 0; j < numberOfAppointments; j++) {
+        appointmentTime = moment(this.state.startTime, "H:mm").add(j * this.state.sessionLengthMinutes, 'minutes').format("H:mm")
+        calendar[i][j] = {
+          status: "available", id: appointmentId,
+          appointmentTimeRange: appointmentTime + " - " + moment(appointmentTime, "H:mm").add(this.state.sessionLengthMinutes, 'minutes').format("H:mm")
+        }
+        calendar[i][j].dayId = i;
+        calendar[i][j].timeId = j;
+        appointmentId++;
+      }
+    }
+    this.setState({
+      calendar: calendar,
+      numberOfReservedAppointments: new Array(this.state.numberOfDays).fill(0)
+    },
+      () => {
+        this.getDayHeader();
+        this.getAppointmentTimes();
+      })
+  }
+
   getDayHeader() {
     let days = [""];
-    for (var i = 0; i < this.props.numberOfDays; i++) {
+    for (var i = 0; i < this.state.numberOfDays; i++) {
       days[i + 1] = (moment().add(i + 1, 'day').format('DD-MM'));
     }
     this.setState({ days: days });
@@ -54,10 +90,10 @@ class AppointmentCalendar extends Component {
 
   getAppointmentTimes() {
     let times = [];
-    let currentTime = this.props.startTime;
-    for (var i = 0; moment(currentTime, "H:mm").isBefore(moment(this.props.endTime, "H:mm")); i++) {
+    let currentTime = this.state.startTime;
+    for (var i = 0; moment(currentTime, "H:mm").isBefore(moment(this.state.endTime, "H:mm")); i++) {
       times[i] = moment(currentTime, "H:mm").format("H:mm").toString()
-      currentTime = moment(currentTime, "H:mm").add(this.props.sessionLengthMinutes, 'minutes')
+      currentTime = moment(currentTime, "H:mm").add(this.state.sessionLengthMinutes, 'minutes')
     }
     this.setState({ appointmentTimes: times })
   }
@@ -82,11 +118,11 @@ class AppointmentCalendar extends Component {
 
     this.setState({ showNameFormatNotification: false })
 
-    if (numberOfReservedAppointments.reduce((a, b) => a + b, 0) === this.props.maximumWeeklyAppointments
+    if (numberOfReservedAppointments.reduce((a, b) => a + b, 0) === this.state.maximumWeeklyAppointments
       && calendar[selectedAppointment.dayId][selectedAppointment.timeId].status === "available") {
       this.setState({ showWeeklyWarning: true })
     }
-    else if (numberOfReservedAppointments[selectedAppointment.dayId] === this.props.maximumDailyAppointments
+    else if (numberOfReservedAppointments[selectedAppointment.dayId] === this.state.maximumDailyAppointments
       && calendar[selectedAppointment.dayId][selectedAppointment.timeId].status === "available") {
       this.setState({ showDailyWarning: true })
     }
@@ -160,7 +196,10 @@ class AppointmentCalendar extends Component {
             return (
               <td key={appointment.id} id={appointment.id} className="table-new-cell d-flex flex-column"
                 onClick={() => {
-                  this.setState({ selectedAppointment: appointment },
+                  this.setState({
+                    selectedAppointment: appointment,
+                    clientName: appointment.patientName + " " + appointment.patientLastName
+                  },
                     () => { this.handleOpenModal() })
                 }}
               >
@@ -170,7 +209,7 @@ class AppointmentCalendar extends Component {
           }
           else if (appointment.status === "reserved") {
             return (
-              <OverlayTrigger overlay={popoverBottom} placement={this.state.selectedAppointment.dayId === this.props.numberOfDays - 1 ? "left" : "right"}>
+              <OverlayTrigger overlay={popoverBottom} placement={this.state.selectedAppointment.dayId === this.state.numberOfDays - 1 ? "left" : "right"}>
                 <td key={appointment.id} id={appointment.id} className="table-reserved-cell d-flex flex-column"
                   onMouseEnter={() => this.setState({ selectedAppointment: appointment })}
                   onMouseLeave={() => {
@@ -199,10 +238,10 @@ class AppointmentCalendar extends Component {
     });
 
     return (
-      <div className="full-screen-width">
+      <div className="full-width">
         <Table className="table" >
           <thead className="thead-dark d-flex no-gutter table-fixed-header">
-            <tr className="d-flex full-screen-width">{days}</tr>
+            <tr className="d-flex full-width">{days}</tr>
           </thead>
           <tbody className="d-flex no-gutter">
             <tr className="border-left border-right col table-row-fixed-left">
@@ -213,7 +252,7 @@ class AppointmentCalendar extends Component {
         </Table >
 
         <Modal show={this.state.showModal} onHide={this.handleCloseModal}>
-          < Modal.Header closeButton >
+          <Modal.Header closeButton>
             <Modal.Title>Rezerviraj termin ({this.state.selectedAppointment.appointmentTimeRange})</Modal.Title>
           </Modal.Header >
           <Modal.Body>
