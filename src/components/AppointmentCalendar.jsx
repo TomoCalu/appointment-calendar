@@ -1,17 +1,18 @@
 import React, { Component } from 'react';
 import moment from 'moment'
-import { Modal, Button, Table, FormControl, Form, Popover, OverlayTrigger, Alert } from 'react-bootstrap'
+import { Modal, Button, Table, FormControl, Form, Popover, OverlayTrigger } from 'react-bootstrap'
 
+import ModalAlert from './ModalAlert'
 import '../components/AppointmentCalendar.css'
 
 class AppointmentCalendar extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      calendar: [],
       days: [],
       appointmentTimes: [],
       showModal: false,
-      calendar: [],
       selectedAppointment: { patientName: "", patientLastName: "", appointmentTimeRange: "", dayId: 0 },
       clientName: "",
       numberOfReservedAppointments: [],
@@ -24,7 +25,7 @@ class AppointmentCalendar extends Component {
     this.removeAppointment = this.removeAppointment.bind(this)
   }
 
-  componentWillMount() {
+  componentDidMount() {
     this.setState({
       calendar: this.props.initialCalendarData,
       numberOfReservedAppointments: new Array(this.props.numberOfDays).fill(0)
@@ -55,7 +56,7 @@ class AppointmentCalendar extends Component {
     let times = [];
     let currentTime = this.props.startTime;
     for (var i = 0; moment(currentTime, "H:mm").isBefore(moment(this.props.endTime, "H:mm")); i++) {
-      times[i] = moment(currentTime, "H:mm").format("H:mm").toString()// + "-" + moment(currentTime, "H:mm").add(this.props.sessionLengthMinutes, 'minutes').format("H:mm").toString();
+      times[i] = moment(currentTime, "H:mm").format("H:mm").toString()
       currentTime = moment(currentTime, "H:mm").add(this.props.sessionLengthMinutes, 'minutes')
     }
     this.setState({ appointmentTimes: times })
@@ -100,7 +101,6 @@ class AppointmentCalendar extends Component {
         numberOfReservedAppointments[selectedAppointment.dayId] += 1;
       }
       calendar[selectedAppointment.dayId][selectedAppointment.timeId].status = "new"
-      //this.setState({ calendar: calendar })
       this.handleCloseModal();
     }
   }
@@ -116,7 +116,6 @@ class AppointmentCalendar extends Component {
 
     calendar[selectedAppointment.dayId][selectedAppointment.timeId] = selectedAppointment;
     numberOfReservedAppointments[selectedAppointment.dayId] -= 1;
-    //this.setState({ calendar: calendar });
     this.handleCloseModal();
   }
 
@@ -236,41 +235,24 @@ class AppointmentCalendar extends Component {
             </Button>
           </Modal.Footer>
 
-          <Alert show={this.state.showNameFormatNotification} variant="warning">
-            <p>
-              Please enter your full name.
-            </p>
-            <hr />
-            <div className="d-flex justify-content-end">
-              <Button onClick={() => this.setState({ showNameFormatNotification: false })} variant="outline-warning">
-                Close
-              </Button>
-            </div>
-          </Alert>
+          <ModalAlert
+            show={this.state.showNameFormatNotification}
+            variant="warning"
+            description=" Please enter your full name."
+            onClick={() => this.setState({ showNameFormatNotification: false })} />
 
-          <Alert show={this.state.showDailyWarning} variant="danger">
-            <p>
-              Maximum number of daily appointments reached.
-            </p>
-            <hr />
-            <div className="d-flex justify-content-end">
-              <Button onClick={() => this.setState({ showDailyWarning: false })} variant="outline-danger">
-                Close
-              </Button>
-            </div>
-          </Alert>
+          <ModalAlert
+            show={this.state.showDailyWarning}
+            variant="danger"
+            description="Maximum number of daily appointments reached."
+            onClick={() => this.setState({ showDailyWarning: false })} />
 
-          <Alert show={this.state.showWeeklyWarning} variant="danger">
-            <p>
-              Maximum number of weekly appointments reached.
-            </p>
-            <hr />
-            <div className="d-flex justify-content-end">
-              <Button onClick={() => this.setState({ showWeeklyWarning: false })} variant="outline-danger">
-                Close
-              </Button>
-            </div>
-          </Alert>
+          <ModalAlert
+            show={this.state.showWeeklyWarning}
+            variant="danger"
+            description=" Maximum number of weekly appointments reached."
+            onClick={() => this.setState({ showWeeklyWarning: false })} />
+
         </Modal >
       </div >
     )

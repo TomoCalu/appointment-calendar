@@ -36,24 +36,25 @@ tr td, th{
 }
 
 .table-new-cell:hover {	
-	background-color:lightgreen;
+	background-color:rgb(119, 243, 119);
 }
-
 .table-new-cell:active {	
-	background-color:rgb(74, 226, 74);
+	background-color:rgb(64, 224, 64);
 }
 
 
 .table-free-cell:hover {
-	background-color:lightgreen;
+	background-color:rgb(119, 243, 119);
 	cursor:pointer;
+}
+.table-free-cell:active {
+	background-color:rgb(64, 224, 64);
 }
 
 .table-reserved-cell {
 	background-color: lightblue;
 	border-color: lightblue !important;
 }
-
 .table-reserved-cell:hover {
 	background-color: lightskyblue;
 	cursor:context-menu;
