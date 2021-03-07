@@ -19,12 +19,14 @@ class AppointmentCalendar extends Component {
     super(props);
     this.state = {
       calendar: [],
-      startTime: props.startTime ?? "8:00",
-      endTime: props.endTime ?? "19:00",
-      sessionLengthMinutes: props.sessionLengthMinutes ?? 30,
-      numberOfDays: props.numberOfDays ?? 7,
-      maximumDailyAppointments: props.maximumDailyAppointments ?? 1,
-      maximumWeeklyAppointments: props.maximumWeeklyAppointments ?? 2,
+      calendarConfiguration: {
+        startTime: props.startTime ?? "8:00",
+        endTime: props.endTime ?? "19:00",
+        sessionLengthMinutes: props.sessionLengthMinutes ?? 30,
+        numberOfDays: props.numberOfDays ?? 7,
+        maximumDailyAppointments: props.maximumDailyAppointments ?? 1,
+        maximumWeeklyAppointments: props.maximumWeeklyAppointments ?? 2,
+      },
       days: [],
       appointmentTimes: [],
       showModal: false,
@@ -36,7 +38,6 @@ class AppointmentCalendar extends Component {
       },
       clientName: "",
       numberOfReservedAppointments: [],
-
       warningMessage: '',
       warningShown: false,
       warningType: WarningType.Danger
@@ -45,15 +46,15 @@ class AppointmentCalendar extends Component {
 
   componentDidMount() {
     let calendar;
-    let numberOfDailyAppointments = CalendarGenerator.getNumberOfDailyAppointments(this.state.startTime, this.state.endTime, this.state.sessionLengthMinutes)
+    let numberOfDailyAppointments = CalendarGenerator.getNumberOfDailyAppointments(this.state.calendarConfiguration)
 
     if (!this.props.initialCalendarData)
-      calendar = CalendarGenerator.generateEmptyCalendar(this.state.startTime, this.state.endTime, this.state.sessionLengthMinutes, this.state.numberOfDays, numberOfDailyAppointments);
+      calendar = CalendarGenerator.generateEmptyCalendar(this.state.calendarConfiguration, numberOfDailyAppointments);
     else calendar = this.props.initialCalendarData;
 
     this.setState({
       calendar: calendar,
-      numberOfReservedAppointments: new Array(this.state.numberOfDays).fill(0)
+      numberOfReservedAppointments: new Array(this.state.calendarConfiguration.numberOfDays).fill(0)
     },
       () => {
         this.getDayHeader();
@@ -76,7 +77,7 @@ class AppointmentCalendar extends Component {
 
   getDayHeader() {
     let days = [""];
-    for (var i = 0; i < this.state.numberOfDays; i++) {
+    for (var i = 0; i < this.state.calendarConfiguration.numberOfDays; i++) {
       days[i + 1] = (moment().add(i + 1, TimeKey.Day).format(TimeFormat.DayMonth));
     }
     this.setState({ days: days });
@@ -84,10 +85,10 @@ class AppointmentCalendar extends Component {
 
   getAppointmentTimes() {
     let times = [];
-    let currentTime = this.state.startTime;
-    for (var i = 0; this.getHours(currentTime).isBefore(this.getHours(this.state.endTime)); i++) {
+    let currentTime = this.state.calendarConfiguration.startTime;
+    for (var i = 0; this.getHours(currentTime).isBefore(this.getHours(this.state.calendarConfiguration.endTime)); i++) {
       times[i] = this.getHours(currentTime).format(TimeFormat.HoursMinutes).toString()
-      currentTime = this.getHours(currentTime).add(this.state.sessionLengthMinutes, TimeKey.Minutes)
+      currentTime = this.getHours(currentTime).add(this.state.calendarConfiguration.sessionLengthMinutes, TimeKey.Minutes)
     }
     this.setState({ appointmentTimes: times })
   }
@@ -114,14 +115,15 @@ class AppointmentCalendar extends Component {
     let calendar = this.state.calendar;
     let fullName = this.state.clientName;
     let numberOfReservedAppointments = this.state.numberOfReservedAppointments;
+    let calendarConfiguration = this.state.calendarConfiguration;
 
     this.clearWarning();
 
-    if (numberOfReservedAppointments.reduce((a, b) => a + b, 0) === this.state.maximumWeeklyAppointments
+    if (numberOfReservedAppointments.reduce((a, b) => a + b, 0) === calendarConfiguration.maximumWeeklyAppointments
       && calendar[selectedAppointment.dayId][selectedAppointment.timeId].status === AppointmentStatus.Available) {
       this.showWarning(Warnings.WeeklyWarning, WarningType.Danger);
     }
-    else if (numberOfReservedAppointments[selectedAppointment.dayId] === this.state.maximumDailyAppointments
+    else if (numberOfReservedAppointments[selectedAppointment.dayId] === calendarConfiguration.maximumDailyAppointments
       && calendar[selectedAppointment.dayId][selectedAppointment.timeId].status === AppointmentStatus.Available) {
       this.showWarning(Warnings.DailyWarning, WarningType.Danger);
     }
@@ -199,7 +201,8 @@ class AppointmentCalendar extends Component {
                 appointment={appointment}
                 handleAppointmentSelect={() => this.handleAppointmentSelect(appointment)}
                 handleAppointmentClear={this.handleAppointmentClear}
-                placement={this.state.selectedAppointment.dayId === this.state.numberOfDays - 1} />
+                placement={this.state.selectedAppointment.dayId === this.state.calendarConfiguration.numberOfDays - 1
+                } />
             default:
               return <EmptyCell id={appointment.id} handleEmptyCellClick={() => this.handleEmptyCellClick(appointment)} />
           }

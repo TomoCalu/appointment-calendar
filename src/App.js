@@ -9,19 +9,22 @@ class App extends Component {
     super(props);
     // You can edit states to get different kinds of tables
     this.state = {
-      numberOfDays: 7,
-      startTime: "8:00",
-      endTime: "19:00",
-      sessionLengthMinutes: 30,
-      numberOfRandomAppointments: 15,
+      calendarConfiguration: {
+        numberOfDays: 7,
+        startTime: "8:00",
+        endTime: "19:00",
+        sessionLengthMinutes: 30,
+        numberOfRandomAppointments: 15,
+      },
       calendar: []
     }
   }
 
   componentDidMount() {
-    let numberOfDailyAppointments = CalendarGenerator.getNumberOfDailyAppointments(this.state.startTime, this.state.endTime, this.state.sessionLengthMinutes);
-    let { calendar, availableAppointmentIds } = CalendarGenerator.generateCalendar(this.state.startTime, this.state.endTime, this.state.sessionLengthMinutes, this.state.numberOfDays, numberOfDailyAppointments);
-    calendar = CalendarGenerator.generateRandomAppointments(this.state.startTime, this.state.endTime, this.state.sessionLengthMinutes, this.state.numberOfDays, this.state.numberOfRandomAppointments, calendar, availableAppointmentIds, numberOfDailyAppointments);
+    let calendarConfiguration = this.state.calendarConfiguration;
+    let numberOfDailyAppointments = CalendarGenerator.getNumberOfDailyAppointments(calendarConfiguration);
+    let { calendar, availableAppointmentIds } = CalendarGenerator.generateCalendar(calendarConfiguration, numberOfDailyAppointments);
+    calendar = CalendarGenerator.generateRandomAppointments(calendarConfiguration, calendar, availableAppointmentIds, numberOfDailyAppointments);
     this.setState({ calendar: calendar })
   }
 
@@ -31,10 +34,10 @@ class App extends Component {
         <header className="App-header">
           <AppointmentCalendar
             initialCalendarData={this.state.calendar}
-            startTime={this.state.startTime}
-            endTime={this.state.endTime}
-            sessionLengthMinutes={this.state.sessionLengthMinutes}
-            numberOfDays={this.state.numberOfDays}
+            startTime={this.state.calendarConfiguration.startTime}
+            endTime={this.state.calendarConfiguration.endTime}
+            sessionLengthMinutes={this.state.calendarConfiguration.sessionLengthMinutes}
+            numberOfDays={this.state.calendarConfiguration.numberOfDays}
             maximumDailyAppointments={1}
             maximumWeeklyAppointments={2}
           // All props are optional
