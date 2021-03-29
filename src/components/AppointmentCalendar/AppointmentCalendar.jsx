@@ -2,8 +2,7 @@ import React, { Component } from 'react';
 import moment from 'moment'
 
 import AppointmentTable from '../AppointmentTable';
-import Warnings from '../../constants/Warnings';
-import WarningType from '../../constants/WarningType';
+import { WarningType, WarningsMessage } from '../../constants/Warnings';
 import AppointmentStatus from '../../constants/AppointmentStatus';
 import EmptyCell from '../EmptyCell';
 import NewCell from '../NewCell';
@@ -121,14 +120,14 @@ class AppointmentCalendar extends Component {
 
     if (numberOfReservedAppointments.reduce((a, b) => a + b, 0) === calendarConfiguration.maximumWeeklyAppointments
       && calendar[selectedAppointment.dayId][selectedAppointment.timeId].status === AppointmentStatus.Available) {
-      this.showWarning(Warnings.WeeklyWarning, WarningType.Danger);
+      this.showWarning(WarningsMessage.WeeklyWarning, WarningType.Danger);
     }
     else if (numberOfReservedAppointments[selectedAppointment.dayId] === calendarConfiguration.maximumDailyAppointments
       && calendar[selectedAppointment.dayId][selectedAppointment.timeId].status === AppointmentStatus.Available) {
-      this.showWarning(Warnings.DailyWarning, WarningType.Danger);
+      this.showWarning(WarningsMessage.DailyWarning, WarningType.Danger);
     }
     else if (!(/^([\w]{3,})+\s+([\w\s]{3,})+$/i).test(fullName)) {
-      this.showWarning(Warnings.NameFormatNotification, WarningType.Warning);
+      this.showWarning(WarningsMessage.NameFormatNotification, WarningType.Warning);
     }
     else {
       fullName = fullName.split(" ", 2);
